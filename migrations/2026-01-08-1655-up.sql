@@ -20,8 +20,3 @@ CREATE TABLE chunks (
     rent_paid NUMERIC,
     PRIMARY KEY (height, chunk_hash)
 );
-
-CREATE TABLE catchup_state (
-    chain_id number PRIMARY KEY,
-    height BIGINT,
-)

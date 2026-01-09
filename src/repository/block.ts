@@ -4,29 +4,53 @@ import {
   Statements,
 } from "../database";
 
-interface BlockInfo {
-  height: number;
-  chunks_included: number;
-  gas_price: string;
-  hash: string;
+export interface Block {
+  height: bigint;
+  chunks_included: bigint;
+  gas_price: bigint;
+  hash: Buffer;
   latest_protocol_version: number;
-  prev_hash: string;
-  timestamp: number;
+  prev_hash: Buffer;
+  timestamp: Date;
   total_supply: string;
 }
 
-export async function storeBlocks(blocks: BlockInfo[]) {
+interface BlockSerialized {
+  height: number | string;
+  chunks_included: number | string;
+  gas_price: number | string;
+  hash: Buffer;
+  latest_protocol_version: number;
+  prev_hash: Buffer;
+  timestamp: string;
+  total_supply: string;
+}
+
+function deserialize(data: BlockSerialized): Block {
+  return {
+    height: BigInt(data.height),
+    chunks_included: BigInt(data.chunks_included),
+    gas_price: BigInt(data.gas_price),
+    hash: data.hash,
+    latest_protocol_version: data.latest_protocol_version,
+    prev_hash: data.prev_hash,
+    timestamp: new Date(data.timestamp),
+    total_supply: data.total_supply,
+  };
+}
+
+export async function storeBlocks(blocks: Block[]) {
   let statements: Statements = [];
 
   for (const block of blocks) {
     const args = [
       block.chunks_included,
       block.gas_price,
-      Buffer.from(atob(block.hash)),
+      block.hash,
       block.height,
       block.latest_protocol_version,
-      Buffer.from(atob(block.prev_hash)),
-      new Date(Math.floor(block.timestamp / 1e6)).toISOString(),
+      block.prev_hash,
+      block.timestamp.toISOString(),
       block.total_supply,
     ];
 
@@ -42,7 +66,7 @@ export async function storeBlocks(blocks: BlockInfo[]) {
     ]
       .sort()
       .join(",");
-    const params = [...Array(14).keys()].map((i) => `$${i + 1}`).join(",");
+    const params = [...Array(8).keys()].map((i) => `$${i + 1}`).join(",");
     const statement = `INSERT INTO blocks (${keys}) VALUES (${params})`;
     statements.push([statement, args]);
   }
@@ -50,36 +74,25 @@ export async function storeBlocks(blocks: BlockInfo[]) {
   await runInTransaction(statements);
 }
 
-interface Block {
-  height: bigint;
-  chunks_included: bigint;
-  gas_price: bigint;
-  hash: Buffer;
-  latest_protocol_version: number;
-  prev_hash: Buffer;
-  timestamp: number;
-  total_supply: string;
-}
-
 export async function getBlock(height: number): Promise<Block | null> {
   const client = getDbPooledConnection();
   const query = `SELECT * FROM blocks WHERE height = $1`;
-  const queryResult = await client.query<Block>(query, [height]);
+  const queryResult = await client.query<BlockSerialized>(query, [height]);
 
   if (queryResult.rows) {
-    return queryResult.rows[0];
+    return deserialize(queryResult.rows[0]);
   }
 
   return null;
 }
 
-export async function getLatestBlock(): Promise<Block | null> {
+export async function getMaximumStoredHeight(): Promise<Block | null> {
   const client = getDbPooledConnection();
   const query = `SELECT * FROM blocks WHERE height = (SELECT MAX(height) FROM blocks)`;
-  const queryResult = await client.query<Block>(query, []);
+  const queryResult = await client.query<BlockSerialized>(query, []);
 
-  if (queryResult.rows) {
-    return queryResult.rows[0];
+  if (queryResult.rowCount && queryResult.rowCount > 0) {
+    return deserialize(queryResult.rows[0]);
   }
 
   return null;
