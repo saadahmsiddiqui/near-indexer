@@ -5,11 +5,5 @@ export const createLogger = (service: string) =>
     level: "info",
     format: winston.format.json(),
     defaultMeta: { service },
-    transports: [
-      new winston.transports.File({
-        filename: `${service}-error.log`,
-        level: "error",
-      }),
-      new winston.transports.File({ filename: `${service}-combined.log` }),
-    ],
+    transports: [new winston.transports.Console({})],
   });

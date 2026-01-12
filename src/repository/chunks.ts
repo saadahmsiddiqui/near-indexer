@@ -70,9 +70,10 @@ export async function storeChunks(chunks: Array<Chunk>): Promise<void> {
 }
 
 export async function getIndexableChunks(limit = 250): Promise<Array<Chunk>> {
-  let statement = `SELECT * from chunks WHERE index_state = 0 LIMIT ${limit}`;
+  let statement = `SELECT * from chunks WHERE index_state = 0 ORDER BY height DESC LIMIT ${limit}`;
   const client = getDbPooledConnection();
   const results = await client.query<ChunkSerialized>(statement, []);
+  await client.end();
   return results.rows.map((row) => deserialize(row));
 }
 
@@ -81,6 +82,6 @@ export async function updateIndexedState(
   state: IndexState
 ) {
   const ids = Array.from(chunksIds).join(",");
-  let statement = `UPDATE chunks SET index_state = ${state} WHERE ids IN (${ids})`;
-  await runInTransaction([[statement, []]])
+  let statement = `UPDATE chunks SET index_state = ${state} WHERE id IN (${ids})`;
+  await runInTransaction([[statement, []]]);
 }

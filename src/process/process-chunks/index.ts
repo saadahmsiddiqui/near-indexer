@@ -6,6 +6,7 @@ import {
   updateIndexedState,
 } from "../../repository/chunks";
 import { storeTransactions, Transaction } from "../../repository/transaction";
+import { sleep } from "../../utils";
 
 export async function processChunks(provider: JsonRpcProvider): Promise<void> {
   const logger = createLogger("processChunks");
@@ -14,6 +15,8 @@ export async function processChunks(provider: JsonRpcProvider): Promise<void> {
   if (indexableChunks.length === 0) return;
 
   let fetchedIds: Set<bigint> = new Set();
+  let failedFetchIds: Set<bigint> = new Set();
+
   const created_at = new Date();
 
   let transactionsToStore: Array<Transaction> = [];
@@ -38,15 +41,25 @@ export async function processChunks(provider: JsonRpcProvider): Promise<void> {
         });
       });
     } catch (error: any) {
-      const message = error.message;
-      logger.error(message);
+      failedFetchIds.add(chunk.id);
     }
   }
 
-  await updateIndexedState(fetchedIds, IndexState.INDEXED);
+  if (failedFetchIds.size > 0) {
+    logger.info(`Updating Index State FAILED ${failedFetchIds.size}`);
+    await updateIndexedState(failedFetchIds, IndexState.FAILED);
+  }
+
+  if (fetchedIds.size > 0) {
+    logger.info(`Updating Index State INDEXED ${fetchedIds.size}`);
+    await updateIndexedState(fetchedIds, IndexState.INDEXED);
+  }
+
   if (transactionsToStore.length > 0) {
+    logger.info(`Storing Transactions ${transactionsToStore.length}`);
     await storeTransactions(transactionsToStore);
   }
 
+  await sleep(1000);
   return;
 }
