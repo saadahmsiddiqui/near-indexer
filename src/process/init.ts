@@ -1,11 +1,7 @@
 import { JsonRpcProvider } from "@near-js/providers";
 
-import pino from "pino";
-
 function fatalExit(message: string) {
-  const logger = pino();
-  const fatal = logger.fatal;
-  fatal(message);
+  console.error(message);
   process.exit(1);
 }
 

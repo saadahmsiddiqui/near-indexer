@@ -1,15 +1,23 @@
 import { config } from "dotenv";
 import { initialize } from "./process/init";
 import { catchUp } from "./process/catch-up";
+import { processChunks } from "./process/process-chunks";
 
 config();
 
 async function main() {
-  try {
-    const init = await initialize();
-    await catchUp(init.provider);
-  } catch (error) {
-    console.error(error)
+  const processName = process.argv[2];
+  const init = await initialize();
+
+  switch (processName) {
+    case "catchUp":
+      await catchUp(init.provider);
+      return;
+    case "processChunks":
+      await processChunks(init.provider);
+      return;
+    default:
+      break;
   }
 }
 

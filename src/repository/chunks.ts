@@ -1,6 +1,13 @@
 import { runInTransaction } from "../database";
 
+export enum IndexState {
+  READY,
+  FAILED,
+  INDEXED,
+}
+
 export interface Chunk {
+  id: bigint;
   height: bigint;
   chunk_hash: Buffer;
   height_created: bigint;
@@ -9,6 +16,7 @@ export interface Chunk {
   gas_used: bigint;
   gas_limit: bigint;
   rent_paid: string;
+  index_state: IndexState;
 }
 
 export async function storeChunks(chunks: Array<Chunk>): Promise<void> {

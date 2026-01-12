@@ -1,5 +1,6 @@
 CREATE TABLE blocks (
-    height BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    height BIGINT,
     chunks_included BIGINT,
     gas_price BIGINT,
     hash BYTEA,
@@ -10,6 +11,7 @@ CREATE TABLE blocks (
 );
 
 CREATE TABLE chunks (
+    id BIGSERIAL PRIMARY KEY,
     height BIGINT,
     chunk_hash BYTEA,
     height_created BIGINT,
@@ -18,5 +20,5 @@ CREATE TABLE chunks (
     gas_used BIGINT,
     gas_limit BIGINT,
     rent_paid NUMERIC,
-    PRIMARY KEY (height, chunk_hash)
+    index_state INT DEFAULT 0
 );

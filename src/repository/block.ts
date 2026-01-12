@@ -5,6 +5,7 @@ import {
 } from "../database";
 
 export interface Block {
+  id: bigint;
   height: bigint;
   chunks_included: bigint;
   gas_price: bigint;
@@ -16,6 +17,7 @@ export interface Block {
 }
 
 interface BlockSerialized {
+  id: number | string;
   height: number | string;
   chunks_included: number | string;
   gas_price: number | string;
@@ -36,6 +38,7 @@ function deserialize(data: BlockSerialized): Block {
     prev_hash: data.prev_hash,
     timestamp: new Date(data.timestamp),
     total_supply: data.total_supply,
+    id: BigInt(data.id)
   };
 }
 
