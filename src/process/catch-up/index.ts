@@ -24,7 +24,8 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
     // TODO: retry getting latest block
     // TODO: from the DB
     if (!process.env.START_BLOCK) {
-      return await catchUp(provider);
+      await sleep(1000);
+      return;
     }
 
     const startFrom = BigInt(process.env.START_BLOCK);
@@ -50,7 +51,7 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
   logger.info(`Difference ${difference}`);
   if (difference <= 0n) {
     await sleep(1000);
-    return await catchUp(provider);
+    return;
   }
 
   let blocks: Array<Block> = [];
@@ -108,6 +109,8 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
     const message = error.message;
     logger.error(`Failure: ${message}`);
   } finally {
-    return await catchUp(provider);
+    blocks = [];
+    chunks = [];
+    await sleep(1000);
   }
 }

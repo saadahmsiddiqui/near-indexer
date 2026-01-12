@@ -14,10 +14,8 @@ export type Statements = Array<[string, Array<any>]>;
 
 export async function runInTransaction(statements: Statements) {
   const client = getDbPooledConnection();
-  console.info(`Executing ${statements.length} statements`);
 
   try {
-    console.info("PG Transaction Initiated");
     await client.query("BEGIN");
 
     for (const [query, args] of statements) {
@@ -25,9 +23,7 @@ export async function runInTransaction(statements: Statements) {
     }
 
     await client.query("COMMIT");
-    console.info("PG Transaction Successful");
   } catch (error: any) {
-    console.error("PG Transaction Failed " + error.message);
     await client.query("ROLLBACK");
   } finally {
     client.end();

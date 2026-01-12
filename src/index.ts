@@ -11,8 +11,9 @@ async function main() {
 
   switch (processName) {
     case "catchUp":
-      await catchUp(init.provider);
-      return;
+      while (true) {
+        await catchUp(init.provider);
+      }
     case "processChunks":
       await processChunks(init.provider);
       return;
