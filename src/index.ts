@@ -15,8 +15,9 @@ async function main() {
         await catchUp(init.provider);
       }
     case "processChunks":
-      await processChunks(init.provider);
-      return;
+      while (true) {
+        await processChunks(init.provider);
+      }
     default:
       break;
   }

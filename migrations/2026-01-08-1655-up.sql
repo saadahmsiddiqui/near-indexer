@@ -22,3 +22,16 @@ CREATE TABLE chunks (
     rent_paid NUMERIC,
     index_state INT DEFAULT 0
 );
+
+CREATE TABLE transactions (
+    id BIGSERIAL PRIMARY KEY,
+    hash TEXT NOT NULL UNIQUE,
+    nonce BIGINT NOT NULL,
+    priority_fee BIGINT,
+    public_key TEXT NOT NULL,
+    receiver_id TEXT NOT NULL,
+    signature TEXT NOT NULL,
+    signer_id TEXT NOT NULL,
+    actions JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);

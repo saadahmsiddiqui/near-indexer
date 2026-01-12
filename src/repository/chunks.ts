@@ -1,4 +1,4 @@
-import { runInTransaction } from "../database";
+import { getDbPooledConnection, runInTransaction } from "../database";
 
 export enum IndexState {
   READY,
@@ -17,6 +17,34 @@ export interface Chunk {
   gas_limit: bigint;
   rent_paid: string;
   index_state: IndexState;
+}
+
+export interface ChunkSerialized {
+  id: number | string;
+  height: number | string;
+  chunk_hash: Buffer;
+  height_created: number | string;
+  height_included: number | string;
+  shard_id: number | string;
+  gas_used: number | string;
+  gas_limit: number | string;
+  rent_paid: string;
+  index_state: IndexState;
+}
+
+function deserialize(data: ChunkSerialized): Chunk {
+  return {
+    id: BigInt(data.id),
+    height: BigInt(data.height),
+    chunk_hash: data.chunk_hash,
+    height_created: BigInt(data.height_created),
+    height_included: BigInt(data.height_included),
+    shard_id: BigInt(data.shard_id),
+    gas_used: BigInt(data.gas_used),
+    gas_limit: BigInt(data.gas_limit),
+    rent_paid: data.rent_paid,
+    index_state: data.index_state,
+  };
 }
 
 export async function storeChunks(chunks: Array<Chunk>): Promise<void> {
@@ -39,4 +67,20 @@ export async function storeChunks(chunks: Array<Chunk>): Promise<void> {
 
   statement += values.join(",");
   await runInTransaction([[statement, []]]);
+}
+
+export async function getIndexableChunks(limit = 250): Promise<Array<Chunk>> {
+  let statement = `SELECT * from chunks WHERE index_state = 0 LIMIT ${limit}`;
+  const client = getDbPooledConnection();
+  const results = await client.query<ChunkSerialized>(statement, []);
+  return results.rows.map((row) => deserialize(row));
+}
+
+export async function updateIndexedState(
+  chunksIds: Set<bigint>,
+  state: IndexState
+) {
+  const ids = Array.from(chunksIds).join(",");
+  let statement = `UPDATE chunks SET index_state = ${state} WHERE ids IN (${ids})`;
+  await runInTransaction([[statement, []]])
 }

@@ -31,3 +31,17 @@ export async function getBlock(
       : Promise.reject(error);
   }
 }
+
+export async function getChunk(
+  chunk_id: string,
+  provider: JsonRpcProvider,
+  retryCount = 0
+): ReturnType<JsonRpcProvider["chunk"]> {
+  try {
+    return await provider.chunk(chunk_id);
+  } catch (error) {
+    return retryCount < 5
+      ? await getChunk(chunk_id, provider, retryCount + 1)
+      : Promise.reject(error);
+  }
+}

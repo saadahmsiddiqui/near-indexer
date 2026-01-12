@@ -111,6 +111,6 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
   } finally {
     blocks = [];
     chunks = [];
-    await sleep(1000);
+    await sleep(2000);
   }
 }
