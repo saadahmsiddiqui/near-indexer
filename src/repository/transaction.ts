@@ -38,9 +38,9 @@ export async function storeTransactions(
         transaction.priority_fee
       }, '${transaction.public_key}', '${transaction.receiver_id}', '${
         transaction.signature
-      }', '${transaction.signer_id}', jsonb::'${JSON.stringify(
+      }', '${transaction.signer_id}', '${JSON.stringify(
         transaction.actions
-      )}')`
+      )}'::jsonb)`
     );
   }
 

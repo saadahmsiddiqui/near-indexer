@@ -24,6 +24,7 @@ export async function runInTransaction(statements: Statements) {
 
     await client.query("COMMIT");
   } catch (error: any) {
+    console.error(error);
     await client.query("ROLLBACK");
   } finally {
     client.end();

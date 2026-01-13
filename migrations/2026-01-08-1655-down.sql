@@ -1,2 +1,2 @@
 DROP TABLE blocks;
-DROP TABLE chunks;
+DROP TABLE transactions;

@@ -5,9 +5,9 @@ import {
   storeBlocks,
 } from "../../repository/block";
 import { createLogger } from "../../logger";
-import { base64ToBytes, sleep } from "../../utils";
-import { Chunk, IndexState, storeChunks } from "../../repository/chunks";
+import { sleep } from "../../utils";
 import { getBlock } from "../../rpc";
+import { processChunk } from "../process-chunk";
 
 export async function catchUp(provider: JsonRpcProvider): Promise<void> {
   const logger = createLogger("catchUp");
@@ -33,9 +33,8 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
       height: startFrom,
       chunks_included: BigInt(0),
       gas_price: BigInt(0),
-      hash: Buffer.from("Hello World", "utf8"),
+      hash: "<doesn't need hash here>",
       latest_protocol_version: 1,
-      prev_hash: Buffer.from("Hello World", "utf8"),
       timestamp: new Date(),
       total_supply: "0",
       id: BigInt(0),
@@ -55,62 +54,53 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
   }
 
   let blocks: Array<Block> = [];
-  let chunks: Array<Chunk> = [];
 
   blocks.push({
     height: BigInt(currentChainHeight.header.height),
     chunks_included: BigInt(currentChainHeight.header.chunks_included),
     gas_price: BigInt(currentChainHeight.header.gas_price),
-    hash: Buffer.from(base64ToBytes(currentChainHeight.header.hash)),
+    hash: currentChainHeight.header.hash,
     latest_protocol_version: currentChainHeight.header.latest_protocol_version,
-    prev_hash: Buffer.from(base64ToBytes(currentChainHeight.header.prev_hash)),
     timestamp: new Date(Math.floor(currentChainHeight.header.timestamp / 1e6)),
     total_supply: currentChainHeight.header.total_supply,
     id: BigInt(0),
   });
 
   for (let i = startingPoint.height; i < chainHeightBig; i++) {
-    logger.info(`Querying Block ${i}`);
-    const num = Number(i);
-    const block = await getBlock({ blockId: num }, provider);
-    for (const chunk of block.chunks) {
-      logger.info(`Block ${block.header.height} Chunk ${chunk.chunk_hash}`);
-      chunks.push({
+    try {
+      const num = Number(i);
+      const block = await getBlock({ blockId: num }, provider);
+      for (const chunk of block.chunks) {
+        await processChunk(provider, chunk.chunk_hash);
+        const { height, hash } = block.header;
+        const { chunk_hash } = chunk;
+        const log = `Block Height: ${height} Block Hash: ${hash} Chunk ${chunk_hash}`;
+        logger.info(log);
+      }
+
+      blocks.push({
         height: BigInt(block.header.height),
-        chunk_hash: Buffer.from(base64ToBytes(chunk.chunk_hash)),
-        height_created: BigInt(chunk.height_created),
-        height_included: BigInt(chunk.height_included),
-        shard_id: BigInt(chunk.shard_id),
-        gas_used: BigInt(chunk.gas_used),
-        gas_limit: BigInt(chunk.gas_limit),
-        rent_paid: chunk.rent_paid,
-        index_state: IndexState.READY,
+        chunks_included: BigInt(block.header.chunks_included),
+        gas_price: BigInt(block.header.gas_price),
+        hash: block.header.hash,
+        latest_protocol_version: block.header.latest_protocol_version,
+        timestamp: new Date(Math.floor(block.header.timestamp / 1e6)),
+        total_supply: block.header.total_supply,
         id: BigInt(0),
       });
+    } catch (error: any) {
+      logger.error(error.message);
     }
-
-    blocks.push({
-      height: BigInt(block.header.height),
-      chunks_included: BigInt(block.header.chunks_included),
-      gas_price: BigInt(block.header.gas_price),
-      hash: Buffer.from(base64ToBytes(block.header.hash)),
-      latest_protocol_version: block.header.latest_protocol_version,
-      prev_hash: Buffer.from(base64ToBytes(block.header.prev_hash)),
-      timestamp: new Date(Math.floor(block.header.timestamp / 1e6)),
-      total_supply: block.header.total_supply,
-      id: BigInt(0),
-    });
   }
 
   try {
     await storeBlocks(blocks);
-    await storeChunks(chunks);
   } catch (error: any) {
+    console.error(error)
     const message = error.message;
     logger.error(`Failure: ${message}`);
   } finally {
     blocks = [];
-    chunks = [];
     await sleep(2000);
   }
 }

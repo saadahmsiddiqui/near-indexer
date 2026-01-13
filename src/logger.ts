@@ -5,5 +5,5 @@ export const createLogger = (service: string) =>
     level: "info",
     format: winston.format.json(),
     defaultMeta: { service },
-    transports: [new winston.transports.Console({})],
+    transports: [new winston.transports.File({ filename: "near-indexer.log" })],
   });

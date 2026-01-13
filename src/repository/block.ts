@@ -9,9 +9,8 @@ export interface Block {
   height: bigint;
   chunks_included: bigint;
   gas_price: bigint;
-  hash: Buffer;
+  hash: string;
   latest_protocol_version: number;
-  prev_hash: Buffer;
   timestamp: Date;
   total_supply: string;
 }
@@ -21,9 +20,8 @@ interface BlockSerialized {
   height: number | string;
   chunks_included: number | string;
   gas_price: number | string;
-  hash: Buffer;
+  hash: string;
   latest_protocol_version: number;
-  prev_hash: Buffer;
   timestamp: string;
   total_supply: string;
 }
@@ -35,10 +33,9 @@ function deserialize(data: BlockSerialized): Block {
     gas_price: BigInt(data.gas_price),
     hash: data.hash,
     latest_protocol_version: data.latest_protocol_version,
-    prev_hash: data.prev_hash,
     timestamp: new Date(data.timestamp),
     total_supply: data.total_supply,
-    id: BigInt(data.id)
+    id: BigInt(data.id),
   };
 }
 
@@ -52,7 +49,6 @@ export async function storeBlocks(blocks: Block[]) {
       block.hash,
       block.height,
       block.latest_protocol_version,
-      block.prev_hash,
       block.timestamp.toISOString(),
       block.total_supply,
     ];
@@ -63,13 +59,12 @@ export async function storeBlocks(blocks: Block[]) {
       "hash",
       "height",
       "latest_protocol_version",
-      "prev_hash",
       "timestamp",
       "total_supply",
     ]
       .sort()
       .join(",");
-    const params = [...Array(8).keys()].map((i) => `$${i + 1}`).join(",");
+    const params = [...Array(7).keys()].map((i) => `$${i + 1}`).join(",");
     const statement = `INSERT INTO blocks (${keys}) VALUES (${params})`;
     statements.push([statement, args]);
   }
