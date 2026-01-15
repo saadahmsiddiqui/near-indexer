@@ -11,6 +11,7 @@ CREATE TABLE blocks (
 
 CREATE TABLE transactions (
     id BIGSERIAL PRIMARY KEY,
+    height BIGINT,
     hash TEXT NOT NULL UNIQUE,
     nonce BIGINT NOT NULL,
     priority_fee BIGINT,

@@ -57,10 +57,13 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
 
   try {
     const num = Number(startingPoint.height);
-    await sleep(1000);
     const block = await getBlock({ blockId: num }, provider);
     for (const chunk of block.chunks) {
-      await processChunk(provider, chunk.chunk_hash);
+      await processChunk(
+        provider,
+        BigInt(block.header.height),
+        chunk.chunk_hash
+      );
       const { height, hash } = block.header;
       const { chunk_hash } = chunk;
       const log = `Block Height: ${height} Block Hash: ${hash} Chunk ${chunk_hash}`;
@@ -89,6 +92,6 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
     logger.error(`Failure: ${message}`);
   } finally {
     blocks = [];
-    await sleep(5000);
+    await sleep(1000);
   }
 }
