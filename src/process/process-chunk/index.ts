@@ -1,6 +1,7 @@
 import { JsonRpcProvider } from "@near-js/providers";
 import { createLogger } from "../../logger";
 import { storeTransactions, Transaction } from "../../repository/transaction";
+import { sleep } from "../../utils";
 
 export async function processChunk(
   provider: JsonRpcProvider,
@@ -10,6 +11,7 @@ export async function processChunk(
   let transactionsToStore: Array<Transaction> = [];
 
   try {
+    await sleep(1000);
     const chunkData = await provider.chunk(chunk_hash);
     chunkData.transactions.forEach((tx) => {
       transactionsToStore.push({

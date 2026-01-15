@@ -55,52 +55,40 @@ export async function catchUp(provider: JsonRpcProvider): Promise<void> {
 
   let blocks: Array<Block> = [];
 
-  blocks.push({
-    height: BigInt(currentChainHeight.header.height),
-    chunks_included: BigInt(currentChainHeight.header.chunks_included),
-    gas_price: BigInt(currentChainHeight.header.gas_price),
-    hash: currentChainHeight.header.hash,
-    latest_protocol_version: currentChainHeight.header.latest_protocol_version,
-    timestamp: new Date(Math.floor(currentChainHeight.header.timestamp / 1e6)),
-    total_supply: currentChainHeight.header.total_supply,
-    id: BigInt(0),
-  });
-
-  for (let i = startingPoint.height; i < chainHeightBig; i++) {
-    try {
-      const num = Number(i);
-      const block = await getBlock({ blockId: num }, provider);
-      for (const chunk of block.chunks) {
-        await processChunk(provider, chunk.chunk_hash);
-        const { height, hash } = block.header;
-        const { chunk_hash } = chunk;
-        const log = `Block Height: ${height} Block Hash: ${hash} Chunk ${chunk_hash}`;
-        logger.info(log);
-      }
-
-      blocks.push({
-        height: BigInt(block.header.height),
-        chunks_included: BigInt(block.header.chunks_included),
-        gas_price: BigInt(block.header.gas_price),
-        hash: block.header.hash,
-        latest_protocol_version: block.header.latest_protocol_version,
-        timestamp: new Date(Math.floor(block.header.timestamp / 1e6)),
-        total_supply: block.header.total_supply,
-        id: BigInt(0),
-      });
-    } catch (error: any) {
-      logger.error(error.message);
+  try {
+    const num = Number(startingPoint.height);
+    await sleep(1000);
+    const block = await getBlock({ blockId: num }, provider);
+    for (const chunk of block.chunks) {
+      await processChunk(provider, chunk.chunk_hash);
+      const { height, hash } = block.header;
+      const { chunk_hash } = chunk;
+      const log = `Block Height: ${height} Block Hash: ${hash} Chunk ${chunk_hash}`;
+      logger.info(log);
     }
+
+    blocks.push({
+      height: BigInt(block.header.height),
+      chunks_included: BigInt(block.header.chunks_included),
+      gas_price: BigInt(block.header.gas_price),
+      hash: block.header.hash,
+      latest_protocol_version: block.header.latest_protocol_version,
+      timestamp: new Date(Math.floor(block.header.timestamp / 1e6)),
+      total_supply: block.header.total_supply,
+      id: BigInt(0),
+    });
+  } catch (error: any) {
+    logger.error(error.message);
   }
 
   try {
     await storeBlocks(blocks);
   } catch (error: any) {
-    console.error(error)
+    console.error(error);
     const message = error.message;
     logger.error(`Failure: ${message}`);
   } finally {
     blocks = [];
-    await sleep(2000);
+    await sleep(5000);
   }
 }
