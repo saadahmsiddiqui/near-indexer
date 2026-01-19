@@ -4,11 +4,9 @@ import {
   getMaximumStoredHeight,
   storeBlocks,
 } from "../../repository/block";
-import { createLogger } from "../../logger";
 import { sleep } from "../../utils";
 import { getBlock } from "../../rpc";
 import { processChunk } from "../process-chunk";
-import winston from "winston/lib/winston/config";
 import { Logger } from "winston";
 
 export async function catchUp(provider: JsonRpcProvider, logger: Logger): Promise<void> {

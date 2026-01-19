@@ -1,14 +1,14 @@
 import { config } from "dotenv";
 import { initialize } from "./process/init";
 import { catchUp } from "./process/catch-up";
-import { createLogger } from "winston";
+import { createLogger } from "./logger";
 import { sleep } from "./utils";
 
 config();
 
 async function main() {
   const init = await initialize();
-  const logger = createLogger();
+  const logger = createLogger('near-indexer');
 
   while (true) {
     try {
