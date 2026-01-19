@@ -1,14 +1,22 @@
 import { config } from "dotenv";
 import { initialize } from "./process/init";
 import { catchUp } from "./process/catch-up";
+import { createLogger } from "winston";
+import { sleep } from "./utils";
 
 config();
 
 async function main() {
   const init = await initialize();
+  const logger = createLogger();
 
   while (true) {
-    await catchUp(init.provider);
+    try {
+      await catchUp(init.provider, logger);
+    } catch (error) {
+      logger.error("Error: " + JSON.stringify(error));
+      await sleep(4000)
+    }
   }
 }
 

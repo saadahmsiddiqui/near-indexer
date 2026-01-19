@@ -12,7 +12,7 @@ CREATE TABLE blocks (
 CREATE TABLE transactions (
     id BIGSERIAL PRIMARY KEY,
     height BIGINT,
-    hash TEXT NOT NULL UNIQUE,
+    hash TEXT NOT NULL,
     nonce BIGINT NOT NULL,
     priority_fee BIGINT,
     public_key TEXT NOT NULL,

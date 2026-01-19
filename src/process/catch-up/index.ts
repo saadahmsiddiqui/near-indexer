@@ -8,9 +8,10 @@ import { createLogger } from "../../logger";
 import { sleep } from "../../utils";
 import { getBlock } from "../../rpc";
 import { processChunk } from "../process-chunk";
+import winston from "winston/lib/winston/config";
+import { Logger } from "winston";
 
-export async function catchUp(provider: JsonRpcProvider): Promise<void> {
-  const logger = createLogger("catchUp");
+export async function catchUp(provider: JsonRpcProvider, logger: Logger): Promise<void> {
   // * Get Last Stored Maximum Height from DB
   // * If the height doesn't exist then check
   // * environment variable for a starting point
